@@ -24,3 +24,5 @@ with open('sanitized.json','r',encoding='cp850') as file:
     
 print(len(exercises))
 print(len(failed_exercises)) # we want to dump these into a file and analyze why they fail
+
+# Code which handles comma errors
