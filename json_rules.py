@@ -91,9 +91,8 @@ def breaks_comma_rule(json_lines: List[str]) -> Tuple[bool, str]:
         json_lines: The lines which make up the message
     
     Out:
-        True, "comma_rule" if the rules written above is broken.
+        True, "comma_rule" if the rules written above are broken.
         False, "" otherwise
-
     """
 
     # Ignore first line ( which is supposed to be '{') and
@@ -125,9 +124,100 @@ def breaks_comma_rule(json_lines: List[str]) -> Tuple[bool, str]:
     
     return False, ""
 
+@message_is_readable
+def breaks_colon_rule(json_lines: List[str]) -> Tuple[bool, str]:
+    """
+    Only one ':' should be on each line
+    There must be at least 1 colon on each line
+
+    In:
+        json_lines: The lines which make up the message
+    
+    Out:
+        True, "colon_rule" if the rule written above is broken.
+        False, "" otherwise
+    """
+    for line in json_lines[1:-2]:
+        colons = line.count(':')
+        if colons != 1:
+            return True, "colon_rule"
+    
+    return False, ""
+
+@message_is_readable
+def breaks_quote_rule(json_lines: List[str]) -> Tuple[bool, str]:
+    """
+    There should be either 2 or 4 quotation marks on each line.
+
+    In:
+        json_lines: The lines which make up the message
+    
+    Out:
+        True, "quote_rule" if the rule written above is broken.
+        False, "" otherwise
+    """
+    for line in json_lines[1:-2]:
+        quotes = line.count('"')
+        if quotes not in {2, 4}:
+            return True, "quote_rule"
+    
+    return False, ""
+
+@message_is_readable
+def breaks_weight_rule(json_lines: List[str]) -> Tuple[bool, str]:
+    """
+    Weight should be an int, a float or an expression.
+    In the first 2 cases, this rule wouldn't be broken. However,
+    we don't have expressions yet, so anything such as BW + 3 
+    would break this rule.
+
+    In:
+        json_lines: The lines which make up the message
+    
+    Out:
+        True, "weight_rule" if the rule written above is broken.
+        False, "" otherwise
+    """
+    weight_line = ""
+    for line in json_lines[1:-2]:
+        if "weight" in line:
+            weight_line = line
+            break
+    weight_value = weight_line.split(':')
+    try:
+        float(weight_value)
+    except TypeError:
+        # If we can't convert automatically 
+        # to float, it's probably supposed
+        # to be an expression
+        return True, "weight_rule"
+    
+    return False, ""
+
+@message_is_readable
+def breaks_misc_extra_symbols_rule(json_lines: List[str]) -> Tuple[bool, str]:
+    """
+    The only allowable symbols should be : +, -, ", :, [a-zA-Z0-9], ., <, >, {
+    }, , , \n, _
+
+    In:
+        json_lines: The lines which make up the message
+    
+    Out:
+        True, "misc_rule" if the rule written above is broken.
+        False, "" otherwise
+
+    """
+    #TODO : Implement
+    return False, ""
+
 RULES = [
     breaks_comma_rule,
-    breaks_braces_rule
+    breaks_braces_rule,
+    breaks_colon_rule,
+    breaks_quote_rule,
+    breaks_weight_rule,
+    breaks_misc_extra_symbols_rule,
 ]
 
 def check_rules(json_lines: List[str], rules_list: List[Callable]) -> Set[str]:
@@ -160,5 +250,13 @@ with open(FILE_NAME, 'r') as file:
         json_lines : List[str] = split_json_message_into_lines(json_message)
         broken_rules = check_rules(json_lines, RULES)
         dictionary[message["id"]] = broken_rules
-    
-print(dictionary)
+
+"""
+s = set()
+for k,v in dictionary.items():
+    if 'colon_rule' in v:
+        print (dictionary[k])
+    s = s.union(v)
+
+print(s)
+"""
